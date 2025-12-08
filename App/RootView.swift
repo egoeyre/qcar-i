@@ -13,7 +13,8 @@ struct RootView: View {
                 MainTabView(container: container)
             } else {
                 AuthView(container: container) {
-                    session.markAuthed()
+                    let role = container.authRepo.currentUser?.role ?? .passenger
+                    session.markAuthed(role: role)
                 }
             }
         }
@@ -21,9 +22,11 @@ struct RootView: View {
             checking = true
             defer { checking = false }
 
-            // 最轻量判断：以 repo 缓存的 currentUser 为准
-            // 你也可以在 SupabaseAuthRepositoryImpl 里补一个 loadSession() 更严谨
-            session.isAuthed = (container.authRepo.currentUser != nil)
+            if let role = container.authRepo.currentUser?.role {
+                session.markAuthed(role: role)
+            } else {
+                session.markSignedOut()
+            }
         }
     }
 }

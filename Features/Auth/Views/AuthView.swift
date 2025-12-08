@@ -33,11 +33,20 @@ struct AuthView: View {
                 }
                 .pickerStyle(.segmented)
 
-                Picker("身份", selection: $vm.role) {
-                    Text("我是乘客").tag(AuthVM.RolePick.passenger)
-                    Text("我是司机").tag(AuthVM.RolePick.driver)
+               if vm.mode == .login {
+                    Picker("身份", selection: $vm.role) {
+                        Text("我是乘客").tag(AuthVM.RolePick.passenger)
+                        Text("我是司机").tag(AuthVM.RolePick.driver)
+                    }
+                    .pickerStyle(.segmented)
+                } else {
+                    // 注册固定乘客
+                    Text("注册默认身份：乘客")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .onAppear { vm.role = .passenger }
                 }
-                .pickerStyle(.segmented)
+ 
 
                 Group {
                     if vm.method == .emailPassword {

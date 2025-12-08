@@ -35,8 +35,11 @@ final class AuthVM: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            _ = try await client.auth.signUp(email: email, password: password)  // :contentReference[oaicite:2]{index=2}
-            try await setRoleAfterAuth()
+            _ = try await client.auth.signUp(email: email, password: password)
+
+            // ✅ 注册统一默认为乘客
+            _ = try await authRepo.signInAsPassenger()
+
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -70,7 +73,7 @@ final class AuthVM: ObservableObject {
         defer { isLoading = false }
         do {
             try await client.auth.verifyOTP(phone: phone, token: otp, type: .sms)  // :contentReference[oaicite:5]{index=5}
-            try await setRoleAfterAuth()
+            _ = try await authRepo.signInAsPassenger()
         } catch {
             errorMessage = error.localizedDescription
         }

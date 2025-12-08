@@ -117,6 +117,7 @@ struct ProfileView: View {
             case .driver:
                 _ = try await container.authRepo.signInAsDriver()
             }
+            session.updateRole(role)
         } catch {
             errorMessage = error.localizedDescription
         }
