@@ -77,12 +77,20 @@ struct DriverHomeView: View {
             .onDisappear { vm.onDisappear() }
             .navigationDestination(isPresented: $vm.shouldNavigateToCurrentOrder) {
                 if let order = vm.currentOrder {
-                    DriverCurrentOrderView(container: container, order: order)
+                    DriverCurrentOrderView(
+                        container: container,
+                        isPresented: $vm.shouldNavigateToCurrentOrder,
+                        order: order,
+                        onCompleted: {
+                            // ✅ 通知首页状态收尾
+                            vm.currentOrder = nil
+                            Task { await vm.refreshNearbyOrders() }
+                        }
+                    )
                 } else {
                     Text("暂无当前订单")
                 }
             }
-
         }
     }
 

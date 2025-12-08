@@ -2,7 +2,10 @@ import SwiftUI
 
 struct DriverCurrentOrderView: View {
     let container: AppContainer
+    @Binding var isPresented: Bool          // ✅ 新增：用于返回列表
     @State var order: Order
+
+    var onCompleted: (() -> Void)? = nil    // ✅ 新增：通知首页刷新
 
     @State private var errorMessage: String?
 
@@ -72,6 +75,12 @@ struct DriverCurrentOrderView: View {
         do {
             let updated = try await container.orderRepo.updateStatus(orderId: order.id, status: status)
             order = updated
+
+            // ✅ 关键：完成行程后回到接单列表
+            if status == .completed {
+                onCompleted?()
+                isPresented = false
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

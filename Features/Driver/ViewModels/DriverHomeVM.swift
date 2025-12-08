@@ -125,6 +125,7 @@ final class DriverHomeVM: ObservableObject {
             nearbyOrders = []
             errorMessage = error.localizedDescription
         }
+        if !isOnline { nearbyOrders = [] }
     }
 
     func accept(_ order: Order) async {
