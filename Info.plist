@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>用于获取您的位置以展示附近司机与行程路线</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>在后台持续上报位置</string>
+</dict>
+</plist>
