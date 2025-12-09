@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 
-struct Order: Identifiable, Codable, Equatable {
+struct Order: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     let passengerId: UUID
     var driverId: UUID?
@@ -95,5 +95,19 @@ struct Order: Identifiable, Codable, Equatable {
         lhs.dropoff?.longitude == rhs.dropoff?.longitude &&
         lhs.status == rhs.status &&
         lhs.createdAt == rhs.createdAt
+    }
+    
+    // MARK: - Hashable
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(passengerId)
+        hasher.combine(driverId)
+        hasher.combine(pickup.latitude)
+        hasher.combine(pickup.longitude)
+        hasher.combine(dropoff?.latitude)
+        hasher.combine(dropoff?.longitude)
+        hasher.combine(status)
+        hasher.combine(createdAt)
     }
 }
