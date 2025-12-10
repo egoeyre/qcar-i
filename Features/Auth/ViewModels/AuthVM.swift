@@ -37,8 +37,8 @@ final class AuthVM: ObservableObject {
         do {
             _ = try await client.auth.signUp(email: email, password: password)
 
-            // ✅ 注册统一默认为乘客
-            _ = try await authRepo.signInAsPassenger()
+            // ✅ 注册后按你选择的身份建档/切角色
+            try await setRoleAfterAuth()
 
         } catch {
             errorMessage = error.localizedDescription
@@ -49,7 +49,7 @@ final class AuthVM: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            _ = try await client.auth.signIn(email: email, password: password)  // :contentReference[oaicite:3]{index=3}
+            _ = try await client.auth.signIn(email: email, password: password)
             try await setRoleAfterAuth()
         } catch {
             errorMessage = error.localizedDescription
@@ -62,7 +62,7 @@ final class AuthVM: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await client.auth.signInWithOTP(phone: phone)  // :contentReference[oaicite:4]{index=4}
+            try await client.auth.signInWithOTP(phone: phone)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -72,8 +72,11 @@ final class AuthVM: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await client.auth.verifyOTP(phone: phone, token: otp, type: .sms)  // :contentReference[oaicite:5]{index=5}
-            _ = try await authRepo.signInAsPassenger()
+            try await client.auth.verifyOTP(phone: phone, token: otp, type: .sms)
+
+            // ✅ 关键修复：不要写死 passenger
+            try await setRoleAfterAuth()
+
         } catch {
             errorMessage = error.localizedDescription
         }

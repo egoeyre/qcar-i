@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Combine
+
 @MainActor
 final class DriverHomeVM: ObservableObject {
     @Published var isOnline: Bool = false
@@ -11,7 +12,6 @@ final class DriverHomeVM: ObservableObject {
     @Published var currentOrder: Order?
     @Published var shouldNavigateToCurrentOrder = false
 
-    
     @Published var isLoadingOrders = false
 
     private let authRepo: AuthRepository
@@ -38,7 +38,6 @@ final class DriverHomeVM: ObservableObject {
     }
 
     deinit {
-        // Cancel tasks directly without going through main actor-isolated methods
         realtimeTasks.forEach { $0.cancel() }
         heartbeatTask?.cancel()
     }
@@ -50,7 +49,6 @@ final class DriverHomeVM: ObservableObject {
         locationManager.start()
 
         Task { await ensureDriverSession() }
-        
         Task { await loadMyCurrentOrderIfAny() }
 
         startRealtime()
@@ -89,11 +87,11 @@ final class DriverHomeVM: ObservableObject {
         let coord = locationManager.lastCoordinate
 
         do {
-            // setOnline 会走你 driverRepo 的 “upsert_my_driver_state”
+            // 上线/下线（走 upsert_my_driver_state）
             let updated = try await driverRepo.setOnline(target, driverId: id)
             isOnline = updated.isOnline
 
-            // 第一时间也写一次位置
+            // 立即补一笔位置（如果有定位）
             if let c = coord {
                 me = try await driverRepo.updateLocation(c, driverId: id)
             } else {
@@ -125,6 +123,7 @@ final class DriverHomeVM: ObservableObject {
             nearbyOrders = []
             errorMessage = error.localizedDescription
         }
+
         if !isOnline { nearbyOrders = [] }
     }
 
@@ -142,8 +141,7 @@ final class DriverHomeVM: ObservableObject {
         }
     }
 
-
-    // MARK: - Heartbeat (位置心跳)
+    // MARK: - Heartbeat（司机位置心跳）
 
     private func startHeartbeat() {
         stopHeartbeat()
@@ -159,7 +157,7 @@ final class DriverHomeVM: ObservableObject {
                     _ = try? await self.driverRepo.updateLocation(c, driverId: id)
                 }
 
-                // 3 秒一次够用（MVP）
+                // 3 秒一次（MVP）
                 try? await Task.sleep(nanoseconds: 3 * 1_000_000_000)
             }
         }
@@ -175,7 +173,7 @@ final class DriverHomeVM: ObservableObject {
     private func startRealtime() {
         guard realtimeTasks.isEmpty else { return }
 
-        // 新订单/订单被别人接走 → 刷新列表
+        // orders 表变化：刷新附近订单 + 尝试补当前订单
         let t1 = Task { [weak self] in
             guard let self else { return }
             let stream = await self.realtime.ordersChangeStream()
@@ -193,34 +191,21 @@ final class DriverHomeVM: ObservableObject {
         realtimeTasks.removeAll()
     }
 
+    // MARK: - 当前订单
+
     func loadMyCurrentOrderIfAny() async {
         guard let id = myDriverId else { return }
+        guard let impl = orderRepo as? SupabaseOrderRepositoryImpl else {
+            currentOrder = nil
+            return
+        }
 
-        // 这里用表查询实现“司机当前订单”
-        // 只取非终态的最近一单
         do {
-            struct Row: Decodable {
-                let id: UUID
-                let passenger_id: UUID
-                let driver_id: UUID?
-                let pickup_lat: Double
-                let pickup_lng: Double
-                let dropoff_lat: Double?
-                let dropoff_lng: Double?
-                let status: String
-                let created_at: Date
-            }
-
-            // 需要你在 SupabaseOrderRepositoryImpl 里暴露一个 helper
-            // 为了不改协议，这里最简单做法：
-            // 直接调用 orderRepo.getOrder(by:) 不够用
-            // 所以我们在 VM 里先走“协议内可得的信息”：
-            // ✅ 方案：让 orderRepo 增加一个可选扩展函数（见下方 Extension）
-        if let impl = orderRepo as? SupabaseOrderRepositoryImpl {
-            do {
-                let list = try await impl.getMyActiveDriverOrders(driverId: id)
-                currentOrder = list.first
-            } catch {}
+            let list = try await impl.getMyActiveDriverOrders(driverId: id)
+            currentOrder = list.first
+        } catch {
+            currentOrder = nil
+            errorMessage = error.localizedDescription
         }
     }
-}}
+}

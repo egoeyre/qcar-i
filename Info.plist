@@ -3,8 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>用于获取您的位置以展示附近司机与行程路线</string>
+	<string>用实时获取您和司机的位置</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>在后台持续上报位置</string>
+	<string>后台开启定位</string>
 </dict>
 </plist>
